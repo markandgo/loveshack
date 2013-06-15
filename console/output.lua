@@ -70,6 +70,7 @@ function output:iterate(reverseOrder)
 	return function()
 		local line = lines[index]
 		index = index + delta
+		line = line and line.str or line
 		return line
 	end
 end
