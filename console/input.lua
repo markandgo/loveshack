@@ -101,6 +101,7 @@ function input:flush()
 		local history_size = #self.history
 		while history_size > self.max_history do
 			table.remove(self.history) 
+			history_size = history_size - 1
 		end
 	end
 	if self.previous_remember then
