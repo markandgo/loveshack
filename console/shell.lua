@@ -111,7 +111,7 @@ function shell:update(dt)
 	end
 	
 	output:resize(w)
-	for line in output:iterate(true) do
+	for index,line in output:iterate(true) do
 		curr_row   = curr_row-1
 		if curr_row > 0 then display:write(line,1,curr_row) end
 	end

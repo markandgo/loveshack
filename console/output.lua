@@ -64,14 +64,16 @@ function output:write(str)
 end
 
 function output:iterate(reverseOrder)
-	local lines = self.lines
-	local index = reverseOrder and #lines or 1
-	local delta = reverseOrder and -1 or 1
+	local lines     = self.lines
+	local next_index= reverseOrder and #lines or 1
+	local delta     = reverseOrder and -1 or 1
 	return function()
-		local line = lines[index]
-		index = index + delta
-		line = line and line.str or line
-		return line
+		local index = next_index
+		local line  = lines[index]
+		if not line then return end
+		next_index  = next_index + delta
+		line        = line and line.str or line
+		return index,line,line and line.wrapped
 	end
 end
 
