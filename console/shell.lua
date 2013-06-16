@@ -84,12 +84,14 @@ function shell:update(dt)
 	self.input:update(dt)
 	if not self.redraw_all then return else self.redraw_all = false end
 	local input,output,display = self.input,self.output,self.display
+	
 	local w,h       = display:getSize()
 	local input_str = (self.prompt or '')..table.concat(input.chars)
+	local cursor_pos= input.cursor_pos + #self.prompt
 	
-	local curr_row
-
-	curr_row = h
+	if cursor_pos > #input_str then input_str = input_str..' ' end
+	
+	local curr_row   = h
 	local input_rows = math.max(math.ceil(#input_str/w),1)
 	while input_rows > h do
 		input_str        = input_str:sub(w+1)
@@ -100,7 +102,6 @@ function shell:update(dt)
 	display:clear()
 	display:write(input_str,1,curr_row)
 	
-	local cursor_pos = input.cursor_pos + #self.prompt
 	local row_offset = math.ceil(cursor_pos/display.chars_width)-1
 	local col_pos    = cursor_pos - row_offset*display.chars_width
 	local row_pos    = curr_row+row_offset
