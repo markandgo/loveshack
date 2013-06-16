@@ -19,7 +19,7 @@ function shell:init(input,output,display)
 	self.display          = display or self.display
 	self.cursor_bg_color  = {255,255,255}
 	self.cursor_char_color= {0,0,0}
-	self.prompt_oy        = 0
+	self.scroll_oy        = 0
 	self.redraw_all       = true
 	self._previous_chunk  = nil
 	self._env             = setmetatable(
@@ -31,7 +31,15 @@ function shell:init(input,output,display)
 		if self.onFlush then self:onFlush(str) end
 	end
 	
-	function self.input.onKeypressed(key,unicode)
+	function self.input.onKeypressed(input,key,unicode)
+		if key == 'pageup' then
+			self.scroll_oy = math.min( self.scroll_oy + self.display.chars_height,
+				self.output.max_lines-self.display.chars_height)
+		elseif key == 'pagedown' then 
+			self.scroll_oy = math.max(self.scroll_oy - self.display.chars_height,0)
+		else 
+			self.scroll_oy = 0 
+		end	
 		self.redraw_all = true
 	end
 end
@@ -78,13 +86,6 @@ function shell:print(...)
 end
 
 function shell:keypressed(key,unicode)
-	if key == 'pageup' then 
-		self.prompt_oy = self.prompt_oy + self.display.chars_height
-	elseif key == 'pagedown' then 
-		self.prompt_oy = math.max(self.prompt_oy - self.display.chars_height,0)
-	else 
-		self.prompt_oy = 0 
-	end
 	self.input:keypressed(key,unicode)
 end
 
@@ -104,20 +105,20 @@ function shell:update(dt)
 	local input_len    = #input_str
 	local input_height = math.ceil(input_len/w)
 	local output_height= #output.lines
-	local prompt_y     = h - input_height+1 + self.prompt_oy
+	local input_y2     = h - input_height+1 + self.scroll_oy
 	
-	local sub_start    = math.max( (1-prompt_y)*w+1, 1)
-	local sub_end      = math.max( (h-prompt_y+1)*w, 1)
+	local sub_start    = math.max( (1-input_y2)*w+1, 1)
+	local sub_end      = math.max( (h-input_y2+1)*w, 1)
 	local sub_string   = input_str:sub(sub_start,sub_end)
 	
-	local y_start   = math.max(1, math.min(prompt_y,h) )
-	local y_end     = math.max(1, math.min(prompt_y-1+input_height,h) )
-	local sub_string= input_str:sub( (y_start-prompt_y)*w+1, (y_end-prompt_y+1)*w)
+	local y_start   = math.max(1, math.min(input_y2,h) )
+	local y_end     = math.max(1, math.min(input_y2-1+input_height,h) )
+	local sub_string= input_str:sub( (y_start-input_y2)*w+1, (y_end-input_y2+1)*w)
 	
 	display:write(sub_string,1,y_start)
 	
 	local cursor_oy = math.ceil(cursor_pos/w)-1
-	local cursor_y  = prompt_y+cursor_oy
+	local cursor_y  = input_y2+cursor_oy
 	
 	if cursor_y > 0 and cursor_y <= h then
 		local cursor_x = cursor_pos-(cursor_oy*w)
@@ -126,7 +127,7 @@ function shell:update(dt)
 	end
 	
 	output:resize(w)
-	local curr_row = prompt_y
+	local curr_row = input_y2
 	for index,line in output:iterate(true) do
 		curr_row   = curr_row-1
 		if curr_row > 0 and curr_row <= h then display:write(line,1,curr_row) end
