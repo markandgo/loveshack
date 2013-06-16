@@ -19,6 +19,7 @@ function shell:init(input,output,display)
 	self.display          = display or self.display
 	self.cursor_bg_color  = {255,255,255}
 	self.cursor_char_color= {0,0,0}
+	self.prompt_oy        = 0
 	self.redraw_all       = true
 	self._previous_chunk  = nil
 	self._env             = setmetatable(
@@ -77,6 +78,13 @@ function shell:print(...)
 end
 
 function shell:keypressed(key,unicode)
+	if key == 'pageup' then 
+		self.prompt_oy = self.prompt_oy + self.display.chars_height
+	elseif key == 'pagedown' then 
+		self.prompt_oy = math.max(self.prompt_oy - self.display.chars_height,0)
+	else 
+		self.prompt_oy = 0 
+	end
 	self.input:keypressed(key,unicode)
 end
 
@@ -85,36 +93,43 @@ function shell:update(dt)
 	if not self.redraw_all then return else self.redraw_all = false end
 	local input,output,display = self.input,self.output,self.display
 	
-	local w,h       = display:getSize()
-	local input_str = (self.prompt or '')..table.concat(input.chars)
-	local cursor_pos= input.cursor_pos + #self.prompt
+	display:clear()
 	
+	local w,h          = display:getSize()
+	local input_str    = (self.prompt or '')..table.concat(input.chars)
+	
+	local cursor_pos   = input.cursor_pos + #self.prompt
 	if cursor_pos > #input_str then input_str = input_str..' ' end
 	
-	local curr_row   = h
-	local input_rows = math.max(math.ceil(#input_str/w),1)
-	while input_rows > h do
-		input_str        = input_str:sub(w+1)
-		local input_rows = math.max(math.ceil(#input_str/w),1)
-	end
-	curr_row = curr_row+1-input_rows
+	local input_len    = #input_str
+	local input_height = math.ceil(input_len/w)
+	local output_height= #output.lines
+	local prompt_y     = h - input_height+1 + self.prompt_oy
 	
-	display:clear()
-	display:write(input_str,1,curr_row)
+	local sub_start    = math.max( (1-prompt_y)*w+1, 1)
+	local sub_end      = math.max( (h-prompt_y+1)*w, 1)
+	local sub_string   = input_str:sub(sub_start,sub_end)
 	
-	local row_offset = math.ceil(cursor_pos/display.chars_width)-1
-	local col_pos    = cursor_pos - row_offset*display.chars_width
-	local row_pos    = curr_row+row_offset
+	local y_start   = math.max(1, math.min(prompt_y,h) )
+	local y_end     = math.max(1, math.min(prompt_y-1+input_height,h) )
+	local sub_string= input_str:sub( (y_start-prompt_y)*w+1, (y_end-prompt_y+1)*w)
 	
-	if row_pos > 0 and row_pos <= h then
-		local char,tc,bc = display:getCell(col_pos,row_pos)
-		display:write(char, col_pos,row_pos, nil, self.cursor_char_color, self.cursor_bg_color)
+	display:write(sub_string,1,y_start)
+	
+	local cursor_oy = math.ceil(cursor_pos/w)-1
+	local cursor_y  = prompt_y+cursor_oy
+	
+	if cursor_y > 0 and cursor_y <= h then
+		local cursor_x = cursor_pos-(cursor_oy*w)
+		local char     = display:getCell(cursor_x,cursor_y)
+		display:write(char, cursor_x,cursor_y, nil, self.cursor_char_color, self.cursor_bg_color)
 	end
 	
 	output:resize(w)
+	local curr_row = prompt_y
 	for index,line in output:iterate(true) do
 		curr_row   = curr_row-1
-		if curr_row > 0 then display:write(line,1,curr_row) end
+		if curr_row > 0 and curr_row <= h then display:write(line,1,curr_row) end
 	end
 end
 
