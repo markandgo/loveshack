@@ -42,10 +42,20 @@ function shell:init(input,output,display)
 		end	
 		self.redraw_all = true
 	end
+	
+	self.output:write 'Welcome to the Love Shack. Type --help to see available commands'
 end
 
 function shell:onFlush(str)
 	self.output:write(self.prompt..str)
+	
+	if str:match '^%s*--help' then
+		self.output:write 
+[[Press up or down to see previous commands.
+Press pageup or pagedown to scroll.]]
+		return
+	end
+	
 	local func,err
 	if self._previous_chunk then
 		self._previous_chunk = self._previous_chunk..str 
