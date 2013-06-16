@@ -49,7 +49,7 @@ end
 function shell:onFlush(str)
 	self.output:write(self.prompt..str)
 	
-	if str:match '^%s*--help' then
+	if str:match '^%s*%-%-help' then
 		self.output:write 
 [[Press up or down to see previous commands.
 Press pageup or pagedown to scroll.]]
