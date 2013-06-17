@@ -1,10 +1,3 @@
-local class = class
-if common and common.class then
-	class = function(n)
-		return common.class(name,{})
-	end
-end
-
 -- #####################################
 -- PRIVATE
 -- #####################################
@@ -12,6 +5,11 @@ local lg       = love.graphics
 local path     = (...):match('^.+[%.\\/]') or ''
 local fontpath = path:gsub('%.','/')..'/DejaVuSansMono.ttf'
 local monoFont = lg.newFont(fontpath,12)
+
+if not (common and common.class and common.instance) then
+	class_commons = true
+	require(path..'class')
+end
 
 local has_canvas_support = lg.isSupported 'canvas'
 
@@ -125,7 +123,7 @@ end
 -- CLASS
 -- #####################################
 
-local display = class 'Display'
+local display = common.class( 'Display', {} )
 
 function display:init(chars_width,chars_height, font, text_color,bg_color)
 	assert(chars_width > 0 and chars_height > 0, 'Display must have width & height greater than 0!')
@@ -327,4 +325,4 @@ function display:draw(x,y)
 	if old_canvas then lg.setCanvas(old_canvas) end	
 end
 
-return display
+return function(...) return common.instance(display,...) end

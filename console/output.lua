@@ -1,8 +1,7 @@
-local class = class
-if common and common.class then
-	class = function(n)
-		return common.class(name,{})
-	end
+if not (common and common.class and common.instance) then
+	class_commons = true
+	local path    = (...):match('^.+[%.\\/]') or ''
+	require(path..'class')
 end
 
 local string_lines = function(self)
@@ -16,7 +15,7 @@ local string_lines = function(self)
 	end
 end
 
-local output = class 'Output'
+local output = common.class( 'Output', {} )
 
 function output:init(chars_width,max_lines)
 	self.lines       = {}
@@ -77,4 +76,4 @@ function output:iterate(reverseOrder)
 	end
 end
 
-return output
+return function(...) return common.instance(output,...) end

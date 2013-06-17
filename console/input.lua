@@ -1,11 +1,10 @@
-local class = class
-if common and common.class then
-	class = function(n)
-		return common.class(name,{})
-	end
+if not (common and common.class and common.instance) then
+	class_commons = true
+	local path    = (...):match('^.+[%.\\/]') or ''
+	require(path..'class')
 end
 
-local input = class 'Input'
+local input = common.class( 'Input', {} )
 
 function input:init(repeat_delay,repeat_interval,max_history)
 	local t = self
@@ -176,4 +175,4 @@ function input:update(dt)
 	end
 end
 
-return input
+return function(...) return common.instance(input,...) end

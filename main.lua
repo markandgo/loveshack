@@ -1,7 +1,7 @@
 local console = require 'console'
 local input   = console.input()
-local output  = console.output(80)
-local display = console.display(80,25)
+local output  = console.output(114)
+local display = console.display(114,43)
 local shell   = console.shell(input,output,display)
 
 function love.keypressed(k,unicode)

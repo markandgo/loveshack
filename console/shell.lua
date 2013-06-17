@@ -3,14 +3,12 @@ local output = require(path..'output')
 local input  = require(path..'input')
 local display= require(path..'display')
 
-local class = class
-if common and common.class then
-	class = function(n)
-		return common.class(name,{})
-	end
+if not (common and common.class and common.instance) then
+	class_commons = true
+	require(path..'class')
 end
 
-local shell = class 'Shell'
+local shell = common.class( 'Shell', {} )
 
 function shell:init(input,output,display)
 	self.prompt           = self.prompt or '>'
@@ -35,6 +33,7 @@ function shell:init(input,output,display)
 		if key == 'pageup' then
 			self.scroll_oy = math.min( self.scroll_oy + self.display.chars_height,
 				self.output.max_lines-self.display.chars_height)
+			self.scroll_oy = math.max(0,self.scroll_oy)
 		elseif key == 'pagedown' then 
 			self.scroll_oy = math.max(self.scroll_oy - self.display.chars_height,0)
 		else 
@@ -148,4 +147,4 @@ function shell:draw(x,y)
 	self.display:draw(x,y)
 end
 
-return shell
+return function(...) return common.instance(shell,...) end
