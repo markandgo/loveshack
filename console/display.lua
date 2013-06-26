@@ -6,6 +6,8 @@ local path     = (...):match('^.+[%.\\/]') or ''
 local fontpath = path:gsub('%.','/')..'/DejaVuSansMono.ttf'
 local monoFont = lg.newFont(fontpath,12)
 
+local DEFAULT_TAB_SIZE = 4
+
 if not (common and common.class and common.instance) then
 	class_commons = true
 	require(path..'class')
@@ -140,6 +142,7 @@ function display:init(chars_width,chars_height, font, text_color,bg_color)
 	t.canvas      = nil
 	t.redraw_list = {}
 	t.redraw_all  = true
+	t.tab_size    = DEFAULT_TAB_SIZE
 end
 
 -- #####################################
@@ -158,6 +161,10 @@ end
 
 function display:getSize()
 	return self.chars_width,self.chars_height
+end
+
+function display:getTabSize()
+	return self.tab_size
 end
 
 function display:getFont()
@@ -211,6 +218,10 @@ function display:setDefaultColors(text_color,bg_color)
 	self.redraw_all = true
 end
 
+function display:setTabSize(tab_size)
+	self.tab_size = tab_size or DEFAULT_TAB_SIZE
+end
+
 -- #####################################
 -- MAIN
 -- #####################################
@@ -242,12 +253,23 @@ function display:write(str,x,y, reverse, text_color,bg_color)
 	
 	while curr_index < len+1 do
 		local char = str and str:sub(curr_index,curr_index)
-		matrix[curr_x] = matrix[curr_x] or {}
 		
-		local data = matrix[curr_x][curr_y]
-		if not data then data = {}; matrix[curr_x][curr_y] = data end
-		
-		writeDataAddRedraw(self, curr_x,curr_y, data, char,text_color,bg_color)
+		if char == '\t' then 
+			curr_x = curr_x + self.tab_size - 1
+			if curr_x > self.chars_width then
+				curr_x = 1; curr_y = curr_y + 1
+			end
+		elseif char == '\n' then
+			curr_x = 0
+			curr_y = curr_y + 1
+		else
+			matrix[curr_x] = matrix[curr_x] or {}
+			
+			local data = matrix[curr_x][curr_y]
+			if not data then data = {}; matrix[curr_x][curr_y] = data end
+			
+			writeDataAddRedraw(self, curr_x,curr_y, data, char,text_color,bg_color)
+		end
 		
 		curr_x = curr_x+1
 		if curr_x > self.chars_width then 

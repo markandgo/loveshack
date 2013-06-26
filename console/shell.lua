@@ -90,7 +90,7 @@ function shell:print(...)
 	for i = 1,count do
 		list[i] = tostring(list[i])
 	end
-	local str = table.concat(list,(' '):rep(4))
+	local str = table.concat(list,'\t')
 	self.output:write(str)
 end
 
