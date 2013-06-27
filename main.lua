@@ -6,7 +6,8 @@ local shell   = console.shell(input,output,display)
 
 function love.keypressed(k,unicode)
 	if k == 'escape' then love.event.push 'quit' end
-	shell:keypressed(k,unicode)
+	if k == 'insert' then shell:keypressed(k,math.random(0x009f+1,254))
+	else shell:keypressed(k,unicode) end
 end
 
 function love.update(dt)
