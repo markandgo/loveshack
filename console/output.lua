@@ -55,6 +55,9 @@ function output:write(str)
 		end
 	end
 	
+	-- hack for empty string
+	if str == '' then table.insert(self.lines,str) end
+	
 	local lines = #self.lines
 	while lines > self.max_lines do
 		lines = lines - 1
