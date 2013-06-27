@@ -2,6 +2,7 @@ local path   = (...):match('^.+[%.\\/]') or ''
 local output = require(path..'output')
 local input  = require(path..'input')
 local display= require(path..'display')
+require(path..'utf8')
 
 if not (common and common.class and common.instance) then
 	class_commons = true
@@ -56,15 +57,14 @@ Press pageup or pagedown to scroll.]]
 	end
 	
 	local func,err
+	local chunk = str
 	if self._previous_chunk then
 		self._previous_chunk = self._previous_chunk..str 
-
-		local chunk= self._previous_chunk
-		chunk      = chunk:gsub('^=','return '):gsub('^return%s+(.*)','print(%1)')
-		func,err   = loadstring(chunk)
-	else
-		func,err = loadstring(str)
+		chunk = self._previous_chunk
 	end
+	
+	chunk      = chunk:gsub('^=','return '):gsub('^return%s+(.*)','print(%1)')
+	func,err   = loadstring(chunk)
 	
 	if func then
 		setfenv(func,self._env)
@@ -104,39 +104,43 @@ function shell:update(dt)
 	local input,output,display = self.input,self.output,self.display
 	
 	display:clear()
+		-- display input
+		
+		local w,h          = display:getSize()
+		local input_str    = (self.prompt or '')..table.concat(input.chars)
+		local input_len    = input_str:utf8len()
+		local prompt_len   = self.prompt:utf8len()
+		
+		local cursor_pos   = input.cursor_pos + prompt_len
+		if cursor_pos > input_len then input_str = input_str..' '; input_len = input_len + 1 end
+		
+		local input_height = math.ceil(input_len/w)
+		local output_height= #output.lines
+		local input_ypos   = h - input_height+1 + self.scroll_oy
+		
+		-- get the visible string onscreen
+		local input_y1  = math.max(1, math.min(input_ypos,h) )
+		local input_y2  = math.max(1, math.min(input_ypos-1+input_height,h) )
+		local sub_i     = (input_y1-input_ypos)*w+1
+		local sub_j     = (input_y2-input_ypos+1)*w
+		
+		local sub_string= input_str:utf8sub(sub_i,sub_j)
 	
-	local w,h          = display:getSize()
-	local input_str    = (self.prompt or '')..table.concat(input.chars)
-	
-	local cursor_pos   = input.cursor_pos + #self.prompt
-	if cursor_pos > #input_str then input_str = input_str..' ' end
-	
-	local input_len    = #input_str
-	local input_height = math.ceil(input_len/w)
-	local output_height= #output.lines
-	local input_y2     = h - input_height+1 + self.scroll_oy
-	
-	local sub_start    = math.max( (1-input_y2)*w+1, 1)
-	local sub_end      = math.max( (h-input_y2+1)*w, 1)
-	local sub_string   = input_str:sub(sub_start,sub_end)
-	
-	local y_start   = math.max(1, math.min(input_y2,h) )
-	local y_end     = math.max(1, math.min(input_y2-1+input_height,h) )
-	local sub_string= input_str:sub( (y_start-input_y2)*w+1, (y_end-input_y2+1)*w)
-	
-	display:write(sub_string,1,y_start)
+	display:write(sub_string,1,input_y1)
 	
 	local cursor_oy = math.ceil(cursor_pos/w)-1
-	local cursor_y  = input_y2+cursor_oy
+	local cursor_y  = input_ypos+cursor_oy
 	
+	-- display cursor
 	if cursor_y > 0 and cursor_y <= h then
 		local cursor_x = cursor_pos-(cursor_oy*w)
 		local char     = display:getCell(cursor_x,cursor_y)
 		display:write(char, cursor_x,cursor_y, nil, self.cursor_char_color, self.cursor_bg_color)
 	end
 	
+	-- display output
 	output:resize(w)
-	local curr_row = input_y2
+	local curr_row = input_ypos
 	for index,line in output:iterate(true) do
 		curr_row   = curr_row-1
 		if curr_row > 0 and curr_row <= h then display:write(line,1,curr_row) end

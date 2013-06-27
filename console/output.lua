@@ -3,6 +3,8 @@ if not (common and common.class and common.instance) then
 	local path    = (...):match('^.+[%.\\/]') or ''
 	require(path..'class')
 end
+local path = (...):match('^.+[%.\\/]') or ''
+require(path..'utf8')
 
 local string_lines = function(self)
 	local index = 1
@@ -46,13 +48,11 @@ end
 function output:write(str)
 	for line in string_lines(str) do
 		local count = 1
-		repeat
-			local newline = line:sub(1,self.chars_width)
+		for newline in line:utf8gensub(self.chars_width) do
 			if count == 2 then newline = {str = newline,wrapped = true} end
 			table.insert(self.lines,newline)
-			line  = line:sub(self.chars_width+1)
 			count = count + 1
-		until line == ''
+		end
 	end
 	
 	local lines = #self.lines

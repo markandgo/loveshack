@@ -3,6 +3,8 @@ if not (common and common.class and common.instance) then
 	local path    = (...):match('^.+[%.\\/]') or ''
 	require(path..'class')
 end
+local path = (...):match('^.+[%.\\/]') or ''
+require(path..'utf8')
 
 local input = common.class( 'Input', {} )
 
@@ -115,7 +117,7 @@ function input:setPrevious(index)
 	if not command then return false end
 	self.chars       = {}
 	local cursor_pos = 1
-	for char in command:gmatch '.' do
+	for char in command:utf8gensub(1) do
 		cursor_pos = cursor_pos + 1
 		table.insert(self.chars,char)
 	end
@@ -141,9 +143,10 @@ function input:getCursorPos() return self.cursor_pos end
 function input:keypressed(key,unicode)
 	if key_hooks[key] then 
 		key_hooks[key](self)
-	elseif unicode > 31 and unicode < 127 then
-		table.insert(self.chars,self.cursor_pos,string.char(unicode))
-		self.cursor_pos = self.cursor_pos + 1
+	elseif unicode > 31 and unicode < 127 or unicode > 0x009F then
+		cursor_pos = cursor_pos or self.cursor_pos
+		table.insert(self.chars,self.cursor_pos,string.utf8char(unicode))
+		self.cursor_pos = self.cursor_pos + 1	
 	end
 	
 	if self.onKeypressed then self:onKeypressed(key,unicode) end

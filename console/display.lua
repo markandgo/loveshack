@@ -4,6 +4,9 @@
 local lg       = love.graphics
 local path     = (...):match('^.+[%.\\/]') or ''
 local fontpath = path:gsub('%.','/')..'/DejaVuSansMono.ttf'
+
+require(path..'utf8')
+
 local monoFont = lg.newFont(fontpath,12)
 
 local DEFAULT_TAB_SIZE = 4
@@ -230,7 +233,7 @@ function display:write(str,x,y, reverse, text_color,bg_color)
 	
 	assertBounds(x,y,self.chars_width,self.chars_height)
 	local curr_x,curr_y= x,y
-	local len          = str and #str or 1
+	local len          = str and str:utf8len() or 1
 	local curr_index   = 1
 	
 	if reverse and str then
@@ -250,9 +253,10 @@ function display:write(str,x,y, reverse, text_color,bg_color)
 	end
 	
 	local matrix = self.chars_matrix
+	local getChar= str and str:utf8gensub()
 	
 	while curr_index < len+1 do
-		local char = str and str:sub(curr_index,curr_index)
+		local char = str and getChar()
 		
 		if char == '\t' then 
 			curr_x = curr_x + self.tab_size - 1
