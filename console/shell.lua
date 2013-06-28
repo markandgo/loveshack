@@ -25,6 +25,10 @@ function shell:init(input,output,display)
 		{print = function(...) shell.print(self,...) end,},
 		{__index = _G,__newindex = _G})
 	
+	function self.output.onWrite(output,str)
+		self.redraw_all = true
+	end
+	
 	-- setup input callback
 	function self.input.onFlush(input,str)
 		if self.onFlush then self:onFlush(str) end

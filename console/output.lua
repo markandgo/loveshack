@@ -45,6 +45,10 @@ function output:resize(chars_width)
 	end
 end
 
+function output:onWrite(str)
+	
+end
+
 function output:write(str)
 	for line in string_lines(str) do
 		local count = 1
@@ -63,6 +67,8 @@ function output:write(str)
 		lines = lines - 1
 		table.remove(self.lines,1)
 	end
+	
+	if self.onWrite then self:onWrite(str) end
 end
 
 function output:iterate(reverseOrder)
