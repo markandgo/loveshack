@@ -73,7 +73,8 @@ Press pageup or pagedown to scroll.]]
 		self.prompt          = '>'
 		self._previous_chunk = nil
 	elseif str == '' then
-		self.output:write(err)
+		local ok = pcall(self.output.write,self.output,err)
+		if not ok then self.output:write 'Unexpected symbol found for variable name.' end
 		self.prompt          = '>'
 		self._previous_chunk = nil
 	elseif self._previous_chunk then
