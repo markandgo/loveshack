@@ -195,8 +195,8 @@ local function utf8sub (s, i, j)
 	end
 
 	-- byte offsets to pass to string.sub
-	local startByte, endByte = 1, bytes
-
+	local startByte,endByte = 1,bytes
+	
 	while pos <= bytes do
 		len = len + 1
 
@@ -211,7 +211,10 @@ local function utf8sub (s, i, j)
 			break
 		end
 	end
-
+	
+	if startChar > len then startByte = bytes+1   end
+	if endChar   < 1   then endByte   = 0         end
+	
 	return s:sub(startByte, endByte)
 end
 
